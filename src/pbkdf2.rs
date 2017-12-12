@@ -13,9 +13,9 @@ use std::iter::repeat;
 use std::io;
 use cryptoutil::copy_memory;
 
-use rand::{OsRng, Rng};
-use serialize::base64;
-use serialize::base64::{FromBase64, ToBase64};
+//use rand::{OsRng, Rng};
+use base64;
+//use serialize::base64::{FromBase64, ToBase64};
 
 use cryptoutil::{read_u32_be, write_u32_be};
 use hmac::Hmac;
@@ -129,12 +129,12 @@ pub fn pbkdf2<M: Mac>(mac: &mut M, salt: &[u8], c: u32, output: &mut [u8]) {
  * * c - The iteration count
  *
  */
-pub fn pbkdf2_simple(password: &str, c: u32) -> io::Result<String> {
-    let mut rng = try!(OsRng::new());
+pub fn pbkdf2_simple(password: &str, c: u32, salt : Vec<u8>) -> io::Result<String> {
+/*    let mut rng = try!(OsRng::new());
 
     // 128-bit salt
     let salt: Vec<u8> = rng.gen_iter::<u8>().take(16).collect();
-
+*/
     // 256-bit derived key
     let mut dk = [0u8; 32];
 
@@ -145,11 +145,11 @@ pub fn pbkdf2_simple(password: &str, c: u32) -> io::Result<String> {
     let mut result = "$rpbkdf2$0$".to_string();
     let mut tmp = [0u8; 4];
     write_u32_be(&mut tmp, c);
-    result.push_str(&tmp.to_base64(base64::STANDARD)[..]);
+    result.push_str(&base64::encode(&tmp)[..]);
     result.push('$');
-    result.push_str(&salt.to_base64(base64::STANDARD)[..]);
+    result.push_str(&base64::encode(&salt)[..]);
     result.push('$');
-    result.push_str(&dk.to_base64(base64::STANDARD)[..]);
+    result.push_str(&base64::encode(&dk)[..]);
     result.push('$');
 
     Ok(result)
@@ -195,7 +195,7 @@ pub fn pbkdf2_check(password: &str, hashed_value: &str) -> Result<bool, &'static
 
     // Parse the iteration count
     let c = match iter.next() {
-        Some(pstr) => match pstr.from_base64() {
+        Some(pstr) => match base64::decode(pstr) {
             Ok(pvec) => {
                 if pvec.len() != 4 { return Err(ERR_STR); }
                 read_u32_be(&pvec[..])
@@ -207,7 +207,7 @@ pub fn pbkdf2_check(password: &str, hashed_value: &str) -> Result<bool, &'static
 
     // Salt
     let salt = match iter.next() {
-        Some(sstr) => match sstr.from_base64() {
+        Some(sstr) => match base64::decode(sstr) {
             Ok(salt) => salt,
             Err(_) => return Err(ERR_STR)
         },
@@ -216,7 +216,7 @@ pub fn pbkdf2_check(password: &str, hashed_value: &str) -> Result<bool, &'static
 
     // Hashed value
     let hash = match iter.next() {
-        Some(hstr) => match hstr.from_base64() {
+        Some(hstr) => match base64::decode(hstr) {
             Ok(hash) => hash,
             Err(_) => return Err(ERR_STR)
         },
@@ -329,8 +329,10 @@ mod test {
     fn test_pbkdf2_simple() {
         let password = "password";
 
-        let out1 = pbkdf2_simple(password, 1024).unwrap();
-        let out2 = pbkdf2_simple(password, 1024).unwrap();
+        let salt1 : Vec<u8> = vec![0;16];
+        let salt2 : Vec<u8> = vec![8;16];
+        let out1 = pbkdf2_simple(password, 1024,salt1).unwrap();
+        let out2 = pbkdf2_simple(password, 1024,salt2).unwrap();
 
         // This just makes sure that a salt is being applied. It doesn't verify that that salt is
         // cryptographically strong, however.
