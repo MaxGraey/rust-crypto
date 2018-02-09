@@ -144,19 +144,19 @@ extern "C" {
     rounds:     u8,
     input:      *const u8,
     round_keys: *const u8,
-    output:     *mut u8,
+    output:     *mut   u8,
   );
   fn rust_crypto_aesni_decrypt_block(
     rounds:     u8,
     input:      *const u8,
     round_keys: *const u8,
-    output:     *mut u8,
+    output:     *mut   u8,
   );
 }
 
 fn setup_working_key_aesni_128(key: &[u8], key_type: KeyType, round_key: &mut [u8]) {
   assert!(key.len() == 16, "Incorrect aesni key length!");
-  
+
   unsafe {
     rust_crypto_aesni_setup_working_key_128(key.as_ptr(), round_key.as_mut_ptr());
 
