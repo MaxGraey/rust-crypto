@@ -268,7 +268,7 @@ pub fn scrypt(password: &[u8], salt: &[u8], params: &ScryptParams, output: &mut 
  * * params - The ScryptParams to use
  *
  */
-pub fn scrypt_simple(password: &str, params: &ScryptParams) -> io::Result<String> {
+pub fn scrypt_simple(_password: &str, _params: &ScryptParams) -> io::Result<String> {
   unimplemented!()
 /*    let mut rng = try!(OsRng::new());
 
