@@ -1157,7 +1157,7 @@ mod test {
                 D: Decryptor,
                 NewEncFunc: FnMut() -> E,
                 NewDecFunc: FnMut() -> D{
-        use rand;
+/*        use rand;
         use rand::Rng;
 
         let tmp : &[_] = &[1, 2, 3, 4];
@@ -1201,6 +1201,7 @@ mod test {
                 rng3.gen());
             assert!(test.get_plain() == &plain_out[..]);
         }
+        */
     }
 
     fn run_test<T, E, D, NewEncFunc, NewDecFunc>(

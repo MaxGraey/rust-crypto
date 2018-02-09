@@ -22,19 +22,19 @@ extern {
     pub fn rust_crypto_util_fixed_time_eq_asm(
             lhsp: *const u8,
             rhsp: *const u8,
-            count: libc::size_t) -> u32;
+            count: usize) -> u32;
     pub fn rust_crypto_util_secure_memset(
             dst: *mut u8,
-            val: libc::uint8_t,
-            count: libc::size_t);
+            val: usize,
+            count: usize);
 }
 
 pub fn secure_memset(dst: &mut [u8], val: u8) {
     unsafe {
         rust_crypto_util_secure_memset(
             dst.as_mut_ptr(),
-            val,
-            dst.len() as libc::size_t);
+            val as usize,
+            dst.len());
     }
 }
 
@@ -44,7 +44,7 @@ pub fn fixed_time_eq(lhs: &[u8], rhs: &[u8]) -> bool {
     if lhs.len() != rhs.len() {
         false
     } else {
-        let count = lhs.len() as libc::size_t;
+        let count = lhs.len();
 
         unsafe {
             let lhsp = lhs.get_unchecked(0);
