@@ -411,7 +411,12 @@ pub fn scrypt_check(password: &str, hashed_value: &str) -> Result<bool, &'static
 mod test {
     use std::iter::repeat;
 
-    use scrypt::{scrypt, scrypt_simple, scrypt_check, ScryptParams};
+    use scrypt::{
+      scrypt,
+      // scrypt_simple,
+      scrypt_check,
+      ScryptParams,
+    };
 
     struct Test {
         password: &'static str,
@@ -488,7 +493,7 @@ mod test {
         }
     }
 
-    fn test_scrypt_simple(log_n: u8, r: u32, p: u32) {
+    /*fn test_scrypt_simple(log_n: u8, r: u32, p: u32) {
         let password = "password";
 
         let params = ScryptParams::new(log_n, r, p);
@@ -529,4 +534,5 @@ mod test {
         // These parameters are intentionally very weak - the goal is to make the test run quickly!
         test_scrypt_simple(3, 1, 256);
     }
+    */
 }

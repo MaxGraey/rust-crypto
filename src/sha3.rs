@@ -458,11 +458,11 @@ impl Clone for Sha3 {
 #[cfg(test)]
 mod tests {
     use digest::Digest;
-    use sha3::{Sha3, Sha3Mode};
-    use hex::{FromHex, ToHex};
+    use sha3::{ Sha3, Sha3Mode };
+    use hex::{ FromHex, ToHex };
 
     struct Test {
-        input: &'static str,
+        input:      &'static str,
         output_str: &'static str,
     }
 
@@ -474,8 +474,12 @@ mod tests {
             let mut out_str = vec![0u8; t.output_str.len() / 2];
 
             sh.result(&mut out_str);
-            println!("{}", &out_str.to_hex());
-            assert!(&out_str.to_hex() == t.output_str);
+
+            let mut result = String::new();
+            out_str.write_hex(&mut result).unwrap();
+            println!("{}", result);
+
+            assert!(result == t.output_str);
 
             sh.reset();
         }
@@ -494,7 +498,10 @@ mod tests {
 
             sh.result(&mut out_str);
 
-            assert!(&out_str.to_hex() == t.output_str);
+            let mut result = String::new();
+            out_str.write_hex(&mut result).unwrap();
+
+            assert!(result == t.output_str);
 
             sh.reset();
         }
@@ -526,7 +533,8 @@ mod tests {
                 output_str: "eead6dbfc7340a56caedc044696a168870549a6a7f6f56961e84a54bd9970b8a"
             },
             Test {
-                input: "e926ae8b0af6e53176dbffcc2a6b88c6bd765f939d3d178a9bde9ef3aa131c61e31c1e42cdfaf4b4dcde579a37e150efbef5555b4c1cb40439d835a724e2fae7",
+                input:      "e926ae8b0af6e53176dbffcc2a6b88c6bd765f939d3d178a9bde9ef3aa131c61\
+                             e31c1e42cdfaf4b4dcde579a37e150efbef5555b4c1cb40439d835a724e2fae7",
                 output_str: "574271cd13959e8ddeae5bfbdb02a3fdf54f2babfd0cbeb893082a974957d0c1"
             }
         ];
@@ -541,7 +549,8 @@ mod tests {
         let test_cases = vec![
             Test {
                 input: "",
-                output_str: "2c23146a63a29acf99e73b88f8c24eaa7dc60aa771780ccc006afbfa8fe2479b2dd2b21362337441ac12b515911957ff"
+                output_str: "2c23146a63a29acf99e73b88f8c24eaa7dc60aa771780ccc\
+                             006afbfa8fe2479b2dd2b21362337441ac12b515911957ff"
             },
         ];
 
@@ -555,7 +564,8 @@ mod tests {
         let test_cases = vec![
             Test {
                 input: "",
-                output_str: "0eab42de4c3ceb9235fc91acffe746b29c29a8c366b7c60e4e67c466f36a4304c00fa9caf9d87976ba469bcbe06713b435f091ef2769fb160cdab33d3670680e"
+                output_str: "0eab42de4c3ceb9235fc91acffe746b29c29a8c366b7c60e4e67c466f36a4304\
+                             c00fa9caf9d87976ba469bcbe06713b435f091ef2769fb160cdab33d3670680e"
             },
         ];
 
