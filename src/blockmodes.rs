@@ -587,10 +587,13 @@ impl <T: BlockEncryptor, X: PaddingProcessor> CbcEncryptor<T, X> {
     /// Create a new CBC encryption mode object
     pub fn new(algo: T, padding: X, iv: Vec<u8>) -> CbcEncryptor<T, EncPadding<X>> {
         let block_size = algo.block_size();
+        assert!(iv.len() == block_size, "IV length isn't equal to the blocksize!");
+
         let processor = CbcEncryptorProcessor {
             algo: algo,
             temp: repeat(0).take(block_size).collect()
         };
+
         CbcEncryptor {
             block_engine: BlockEngine::new_with_history(
                 processor,
@@ -682,16 +685,19 @@ impl <A: BlockEncryptor> CtrMode<A> {
     /// Create a new CTR object
     pub fn new(algo: A, ctr: Vec<u8>) -> CtrMode<A> {
         let block_size = algo.block_size();
+        assert!(ctr.len() == block_size, "Ctr length isn't equal to the blocksize!");
         CtrMode {
             algo: algo,
             ctr: ctr,
             bytes: OwnedReadBuffer::new_with_len(repeat(0).take(block_size).collect(), 0)
         }
     }
+
     pub fn reset(&mut self, ctr: &[u8]) {
         cryptoutil::copy_memory(ctr, &mut self.ctr);
         self.bytes.reset();
     }
+
     fn process(&mut self, input: &[u8], output: &mut [u8]) {
         assert!(input.len() == output.len());
         let len = input.len();

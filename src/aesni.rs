@@ -155,6 +155,8 @@ extern "C" {
 }
 
 fn setup_working_key_aesni_128(key: &[u8], key_type: KeyType, round_key: &mut [u8]) {
+  assert!(key.len() == 16, "Incorrect aesni key length!");
+  
   unsafe {
     rust_crypto_aesni_setup_working_key_128(key.as_ptr(), round_key.as_mut_ptr());
 
@@ -171,6 +173,8 @@ fn setup_working_key_aesni_128(key: &[u8], key_type: KeyType, round_key: &mut [u
 }
 
 fn setup_working_key_aesni_192(key: &[u8], key_type: KeyType, round_key: &mut [u8]) {
+  assert!(key.len() == 24, "Incorrect aesni key length!");
+
   unsafe {
     rust_crypto_aesni_setup_working_key_192(key.as_ptr(), round_key.as_mut_ptr());
 
@@ -187,6 +191,8 @@ fn setup_working_key_aesni_192(key: &[u8], key_type: KeyType, round_key: &mut [u
 }
 
 fn setup_working_key_aesni_256(key: &[u8], key_type: KeyType, round_key: &mut [u8]) {
+  assert!(key.len() == 32, "Incorrect aesni key length!");
+
   unsafe {
     rust_crypto_aesni_setup_working_key_256(key.as_ptr(), round_key.as_mut_ptr());
 
