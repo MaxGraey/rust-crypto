@@ -58,7 +58,7 @@ impl AesNiEncryptor {
       KeySize256 => (14, setup_working_key_aesni_256),
     };
 
-    let mut e = AesNiEncryptor {
+    let mut encryptor = AesNiEncryptor {
       rounds,
       round_keys: [0u8; 240],
     };
@@ -66,10 +66,10 @@ impl AesNiEncryptor {
     setup_function(
       key,
       KeyType::Encryption,
-      &mut e.round_keys[0..size(e.rounds)],
+      &mut encryptor.round_keys[0..size(encryptor.rounds)],
     );
 
-    e
+    encryptor
   }
 }
 
@@ -88,7 +88,7 @@ impl AesNiDecryptor {
       KeySize256 => (14, setup_working_key_aesni_256),
     };
 
-    let mut d = AesNiDecryptor {
+    let mut decryptor = AesNiDecryptor {
       rounds,
       round_keys: [0u8; 240],
     };
@@ -96,10 +96,10 @@ impl AesNiDecryptor {
     setup_function(
       key,
       KeyType::Decryption,
-      &mut d.round_keys[0..size(d.rounds)],
+      &mut decryptor.round_keys[0..size(decryptor.rounds)],
     );
 
-    d
+    decryptor
   }
 }
 

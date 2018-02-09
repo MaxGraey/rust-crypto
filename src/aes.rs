@@ -280,7 +280,11 @@ mod test {
   };
   use util;
   use aes;
-  use aes::KeySize::{KeySize128, KeySize192, KeySize256};
+  use aes::KeySize::{
+    KeySize128,
+    KeySize192,
+    KeySize256
+  };
 
   // Test vectors from:
   // http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors
@@ -709,10 +713,18 @@ mod bench {
   #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
   use aesni;
 
-  use aessafe;
-  use symmetriccipher::{BlockEncryptor, BlockEncryptorX8};
   use util;
-  use aes::KeySize::{self, KeySize128, KeySize192, KeySize256};
+  use aessafe;
+  use symmetriccipher::{
+    BlockEncryptor,
+    BlockEncryptorX8
+  };
+  use aes::KeySize::{
+    self,
+    KeySize128,
+    KeySize192,
+    KeySize256,
+  };
 
   #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
   #[bench]
@@ -729,7 +741,7 @@ mod bench {
   #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
   fn aesni_bench(bh: &mut Bencher, key_size: KeySize) {
     if util::supports_aesni() {
-      let key: [u8; 16] = [1u8; 16];
+      let key:   [u8; 16] = [1u8; 16];
       let plain: [u8; 16] = [2u8; 16];
 
       let a = aesni::AesNiEncryptor::new(key_size, &key);
