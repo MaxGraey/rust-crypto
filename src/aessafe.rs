@@ -123,10 +123,13 @@ finite field which allows for efficient computation of the AES S-Boxes. See [7] 
       http://www.dtic.mil/cgi-bin/GetTRDoc?AD=ADA434781.
 */
 
-use std::ops::{BitAnd, BitXor, Not};
+use std::ops::{ BitAnd, BitXor, Not };
 use std::default::Default;
 
-use cryptoutil::{read_u32v_le, write_u32_le};
+use cryptoutil::{
+  read_u32v_le,
+  write_u32_le,
+};
 
 use simd::u32x4;
 use step_by::RangeExt;
@@ -141,195 +144,169 @@ use symmetriccipher::{
 const U32X4_0: u32x4 = u32x4(0, 0, 0, 0);
 const U32X4_1: u32x4 = u32x4(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
 
-macro_rules! define_aes_struct(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        #[derive(Clone, Copy)]
-        pub struct $name {
-            sk: [Bs8State<u16>; ($rounds + 1)]
-        }
-    )
-);
+macro_rules! define_aes_struct(($name: ident, $rounds: expr) => (
+  #[derive(Clone, Copy)]
+  pub struct $name {
+    sk: [Bs8State<u16>; ($rounds + 1)]
+  }
+));
 
-macro_rules! define_aes_impl(
-    (
-        $name:ident,
-        $mode:ident,
-        $rounds:expr,
-        $key_size:expr
-    ) => (
-        impl $name {
-            pub fn new(key: &[u8]) -> $name {
-                let mut a =  $name {
-                    sk: [Bs8State(0, 0, 0, 0, 0, 0, 0, 0); ($rounds + 1)]
-                };
-                let mut tmp = [[0u32; 4]; ($rounds + 1)];
-                create_round_keys(key, KeyType::$mode, &mut tmp);
-                for i in 0..$rounds + 1 {
-                    a.sk[i] = bit_slice_4x4_with_u16(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3]);
-                }
-                a
-            }
-        }
-    )
-);
+macro_rules! define_aes_impl((
+  $name:     ident,
+  $mode:     ident,
+  $rounds:   expr,
+  $key_size: expr
+) => (
+  impl $name {
+    pub fn new(key: &[u8]) -> $name {
+      let mut a =  $name {
+        sk: [Bs8State(0, 0, 0, 0, 0, 0, 0, 0); ($rounds + 1)]
+      };
 
-macro_rules! define_aes_enc(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        impl BlockEncryptor for $name {
-            fn block_size(&self) -> usize { 16 }
-            fn encrypt_block(&self, input: &[u8], output: &mut [u8]) {
-                let mut bs = bit_slice_1x16_with_u16(input);
-                bs = encrypt_core(&bs, &self.sk);
-                un_bit_slice_1x16_with_u16(&bs, output);
-            }
-        }
-    )
-);
+      let mut tmp = [[0u32; 4]; ($rounds + 1)];
+      create_round_keys(key, KeyType::$mode, &mut tmp);
 
-macro_rules! define_aes_dec(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        impl BlockDecryptor for $name {
-            fn block_size(&self) -> usize { 16 }
-            fn decrypt_block(&self, input: &[u8], output: &mut [u8]) {
-                let mut bs = bit_slice_1x16_with_u16(input);
-                bs = decrypt_core(&bs, &self.sk);
-                un_bit_slice_1x16_with_u16(&bs, output);
-            }
-        }
-    )
-);
+      for i in 0..$rounds + 1 {
+        a.sk[i] = bit_slice_4x4_with_u16(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3]);
+      }
+      a
+    }
+  }
+));
+
+macro_rules! define_aes_enc(($name: ident, $rounds: expr) => (
+  impl BlockEncryptor for $name {
+    fn block_size(&self) -> usize { 16 }
+    fn encrypt_block(&self, input: &[u8], output: &mut [u8]) {
+      let mut bs = bit_slice_1x16_with_u16(input);
+              bs = encrypt_core(&bs, &self.sk);
+
+      un_bit_slice_1x16_with_u16(&bs, output);
+    }
+  }
+));
+
+macro_rules! define_aes_dec(($name: ident, $rounds: expr) => (
+  impl BlockDecryptor for $name {
+    fn block_size(&self) -> usize { 16 }
+    fn decrypt_block(&self, input: &[u8], output: &mut [u8]) {
+      let mut bs = bit_slice_1x16_with_u16(input);
+              bs = decrypt_core(&bs, &self.sk);
+
+      un_bit_slice_1x16_with_u16(&bs, output);
+    }
+  }
+));
 
 define_aes_struct!(AesSafe128Encryptor, 10);
 define_aes_struct!(AesSafe128Decryptor, 10);
-define_aes_impl!(AesSafe128Encryptor, Encryption, 10, 16);
-define_aes_impl!(AesSafe128Decryptor, Decryption, 10, 16);
-define_aes_enc!(AesSafe128Encryptor, 10);
-define_aes_dec!(AesSafe128Decryptor, 10);
+define_aes_impl!(AesSafe128Encryptor,   Encryption, 10, 16);
+define_aes_impl!(AesSafe128Decryptor,   Decryption, 10, 16);
+define_aes_enc!(AesSafe128Encryptor,    10);
+define_aes_dec!(AesSafe128Decryptor,    10);
 
 define_aes_struct!(AesSafe192Encryptor, 12);
 define_aes_struct!(AesSafe192Decryptor, 12);
-define_aes_impl!(AesSafe192Encryptor, Encryption, 12, 24);
-define_aes_impl!(AesSafe192Decryptor, Decryption, 12, 24);
-define_aes_enc!(AesSafe192Encryptor, 12);
-define_aes_dec!(AesSafe192Decryptor, 12);
+define_aes_impl!(AesSafe192Encryptor,   Encryption, 12, 24);
+define_aes_impl!(AesSafe192Decryptor,   Decryption, 12, 24);
+define_aes_enc!(AesSafe192Encryptor,    12);
+define_aes_dec!(AesSafe192Decryptor,    12);
 
 define_aes_struct!(AesSafe256Encryptor, 14);
 define_aes_struct!(AesSafe256Decryptor, 14);
-define_aes_impl!(AesSafe256Encryptor, Encryption, 14, 32);
-define_aes_impl!(AesSafe256Decryptor, Decryption, 14, 32);
-define_aes_enc!(AesSafe256Encryptor, 14);
-define_aes_dec!(AesSafe256Decryptor, 14);
+define_aes_impl!(AesSafe256Encryptor,   Encryption, 14, 32);
+define_aes_impl!(AesSafe256Decryptor,   Decryption, 14, 32);
+define_aes_enc!(AesSafe256Encryptor,    14);
+define_aes_dec!(AesSafe256Decryptor,    14);
 
-macro_rules! define_aes_struct_x8(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        #[derive(Clone, Copy)]
-        pub struct $name {
-            sk: [Bs8State<u32x4>; ($rounds + 1)]
-        }
-    )
-);
+macro_rules! define_aes_struct_x8(($name: ident, $rounds: expr) => (
+  #[derive(Clone, Copy)]
+  pub struct $name {
+    sk: [Bs8State<u32x4>; ($rounds + 1)]
+  }
+));
 
-macro_rules! define_aes_impl_x8(
-    (
-        $name:ident,
-        $mode:ident,
-        $rounds:expr,
-        $key_size:expr
-    ) => (
-        impl $name {
-            pub fn new(key: &[u8]) -> $name {
-                let mut a =  $name {
-                    sk: [
-                        Bs8State(
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0,
-                            U32X4_0);
-                        ($rounds + 1)]
-                };
-                let mut tmp = [[0u32; 4]; ($rounds + 1)];
-                create_round_keys(key, KeyType::$mode, &mut tmp);
-                for i in 0..$rounds + 1 {
-                    a.sk[i] = bit_slice_fill_4x4_with_u32x4(
-                        tmp[i][0],
-                        tmp[i][1],
-                        tmp[i][2],
-                        tmp[i][3]);
-                }
-                a
-            }
-        }
-    )
-);
+macro_rules! define_aes_impl_x8((
+  $name:     ident,
+  $mode:     ident,
+  $rounds:   expr,
+  $key_size: expr
+) => (
+  impl $name {
+    pub fn new(key: &[u8]) -> $name {
+      let mut a =  $name {
+        sk: [
+          Bs8State(
+            U32X4_0,
+            U32X4_0,
+            U32X4_0,
+            U32X4_0,
+            U32X4_0,
+            U32X4_0,
+            U32X4_0,
+            U32X4_0
+          );
+          ($rounds + 1)
+        ]
+      };
 
-macro_rules! define_aes_enc_x8(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        impl BlockEncryptorX8 for $name {
-            fn block_size(&self) -> usize { 16 }
-            fn encrypt_block_x8(&self, input: &[u8], output: &mut [u8]) {
-                let bs = bit_slice_1x128_with_u32x4(input);
-                let bs2 = encrypt_core(&bs, &self.sk);
-                un_bit_slice_1x128_with_u32x4(bs2, output);
-            }
-        }
-    )
-);
+      let mut tmp = [[0u32; 4]; ($rounds + 1)];
+      create_round_keys(key, KeyType::$mode, &mut tmp);
+      for i in 0..$rounds + 1 {
+        a.sk[i] = bit_slice_fill_4x4_with_u32x4(
+          tmp[i][0],
+          tmp[i][1],
+          tmp[i][2],
+          tmp[i][3]
+        );
+      }
+      a
+    }
+  }
+));
 
-macro_rules! define_aes_dec_x8(
-    (
-        $name:ident,
-        $rounds:expr
-    ) => (
-        impl BlockDecryptorX8 for $name {
-            fn block_size(&self) -> usize { 16 }
-            fn decrypt_block_x8(&self, input: &[u8], output: &mut [u8]) {
-                let bs = bit_slice_1x128_with_u32x4(input);
-                let bs2 = decrypt_core(&bs, &self.sk);
-                un_bit_slice_1x128_with_u32x4(bs2, output);
-            }
-        }
-    )
-);
+macro_rules! define_aes_enc_x8(($name: ident, $rounds: expr) => (
+  impl BlockEncryptorX8 for $name {
+    fn block_size(&self) -> usize { 16 }
+    fn encrypt_block_x8(&self, input: &[u8], output: &mut [u8]) {
+      let bs  = bit_slice_1x128_with_u32x4(input);
+      let bs2 = encrypt_core(&bs, &self.sk);
+      un_bit_slice_1x128_with_u32x4(bs2, output);
+    }
+  }
+));
+
+macro_rules! define_aes_dec_x8(($name: ident, $rounds: expr) => (
+  impl BlockDecryptorX8 for $name {
+    fn block_size(&self) -> usize { 16 }
+    fn decrypt_block_x8(&self, input: &[u8], output: &mut [u8]) {
+      let bs  = bit_slice_1x128_with_u32x4(input);
+      let bs2 = decrypt_core(&bs, &self.sk);
+      un_bit_slice_1x128_with_u32x4(bs2, output);
+    }
+  }
+));
 
 define_aes_struct_x8!(AesSafe128EncryptorX8, 10);
 define_aes_struct_x8!(AesSafe128DecryptorX8, 10);
-define_aes_impl_x8!(AesSafe128EncryptorX8, Encryption, 10, 16);
-define_aes_impl_x8!(AesSafe128DecryptorX8, Decryption, 10, 16);
-define_aes_enc_x8!(AesSafe128EncryptorX8, 10);
-define_aes_dec_x8!(AesSafe128DecryptorX8, 10);
+define_aes_impl_x8!(AesSafe128EncryptorX8,   Encryption, 10, 16);
+define_aes_impl_x8!(AesSafe128DecryptorX8,   Decryption, 10, 16);
+define_aes_enc_x8!(AesSafe128EncryptorX8,    10);
+define_aes_dec_x8!(AesSafe128DecryptorX8,    10);
 
 define_aes_struct_x8!(AesSafe192EncryptorX8, 12);
 define_aes_struct_x8!(AesSafe192DecryptorX8, 12);
-define_aes_impl_x8!(AesSafe192EncryptorX8, Encryption, 12, 24);
-define_aes_impl_x8!(AesSafe192DecryptorX8, Decryption, 12, 24);
-define_aes_enc_x8!(AesSafe192EncryptorX8, 12);
-define_aes_dec_x8!(AesSafe192DecryptorX8, 12);
+define_aes_impl_x8!(AesSafe192EncryptorX8,   Encryption, 12, 24);
+define_aes_impl_x8!(AesSafe192DecryptorX8,   Decryption, 12, 24);
+define_aes_enc_x8!(AesSafe192EncryptorX8,    12);
+define_aes_dec_x8!(AesSafe192DecryptorX8,    12);
 
 define_aes_struct_x8!(AesSafe256EncryptorX8, 14);
 define_aes_struct_x8!(AesSafe256DecryptorX8, 14);
-define_aes_impl_x8!(AesSafe256EncryptorX8, Encryption, 14, 32);
-define_aes_impl_x8!(AesSafe256DecryptorX8, Decryption, 14, 32);
-define_aes_enc_x8!(AesSafe256EncryptorX8, 14);
-define_aes_dec_x8!(AesSafe256DecryptorX8, 14);
+define_aes_impl_x8!(AesSafe256EncryptorX8,   Encryption, 14, 32);
+define_aes_impl_x8!(AesSafe256DecryptorX8,   Decryption, 14, 32);
+define_aes_enc_x8!(AesSafe256EncryptorX8,    14);
+define_aes_dec_x8!(AesSafe256DecryptorX8,    14);
 
 fn ffmulx(x: u32) -> u32 {
   let m1: u32 = 0x80808080;
@@ -369,14 +346,18 @@ fn create_round_keys(key: &[u8], key_type: KeyType, round_keys: &mut [[u32; 4]])
     16 => (4, 10),
     24 => (6, 12),
     32 => (8, 14),
-    _ => panic!("Invalid AES key size."),
+    _  => panic!("Invalid AES key size."),
   };
 
   // The key is copied directly into the first few round keys
   let mut j = 0;
   for i in (0..key.len()).step_up(4) {
-    round_keys[j / 4][j % 4] = (key[i] as u32) | ((key[i + 1] as u32) << 8)
-      | ((key[i + 2] as u32) << 16) | ((key[i + 3] as u32) << 24);
+    round_keys[j / 4][j % 4] =
+        key[i + 0] as u32         |
+      ((key[i + 1] as u32) <<  8) |
+      ((key[i + 2] as u32) << 16) |
+      ((key[i + 3] as u32) << 24);
+
     j += 1;
   }
 
@@ -842,9 +823,9 @@ fn bit_slice_fill_4x4_with_u32x4(a: u32, b: u32, c: u32, d: u32) -> Bs8State<u32
   let mut tmp = [0u8; 128];
 
   for i in 0..8 {
-    write_u32_le(&mut tmp[i * 16..i * 16 + 4], a);
-    write_u32_le(&mut tmp[i * 16 + 4..i * 16 + 8], b);
-    write_u32_le(&mut tmp[i * 16 + 8..i * 16 + 12], c);
+    write_u32_le(&mut tmp[i * 16..i * 16 + 4], a); // TODO looks strange
+    write_u32_le(&mut tmp[i * 16 +  4..i * 16 +  8], b);
+    write_u32_le(&mut tmp[i * 16 +  8..i * 16 + 12], c);
     write_u32_le(&mut tmp[i * 16 + 12..i * 16 + 16], d);
   }
 
