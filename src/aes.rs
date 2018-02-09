@@ -8,9 +8,23 @@
 use aesni;
 
 use aessafe;
-use blockmodes::{PaddingProcessor, EcbEncryptor, EcbDecryptor, CbcEncryptor, CbcDecryptor, CtrMode,
-    CtrModeX8};
-use symmetriccipher::{Encryptor, Decryptor, SynchronousStreamCipher};
+use blockmodes::{
+  PaddingProcessor,
+  EcbEncryptor,
+  EcbDecryptor,
+  CbcEncryptor,
+  CbcDecryptor,
+  CtrMode,
+  CtrModeX8
+};
+
+use symmetriccipher::{
+  Encryptor,
+  Decryptor,
+  SynchronousStreamCipher
+};
+
+#[allow(unused_imports)]
 use util;
 
 /// AES key size
